@@ -80,8 +80,39 @@ if ("TITLE" in os.environ and os.environ['TITLE']):
 else:
     title = app.config['TITLE']
 
+# Comment/remove the next two lines of code.
+# Redis Connection to a local server running on the same machine where the current FLask app is running. 
 # Redis Connection in deploying to VMSS
-r = redis.Redis()
+# r = redis.Redis()
+
+# --start-- Redis configurations in ASK
+logger.info('--start-- Redis configurations in ASK')
+redis_server = os.environ['REDIS']
+logger.info('--1--')
+
+# Redis Connection to another container
+try:
+    if "REDIS_PWD" in os.environ:
+        r = redis.StrictRedis(
+            host=redis_server,
+            port=6379,
+            password=os.environ['REDIS_PWD'])
+        logger.info('--2--')
+
+    else:
+        r = redis.Redis(redis_server)
+        logger.info('--3--')
+    
+    r.ping()
+    logger.info('--4--')
+    
+except redis.ConnectionError:
+    logger.info('Failed to connect to Redis, terminating.')
+    exit('Failed to connect to Redis, terminating.')
+
+# --end-- Redis configurations in ASK
+
+
 
 # Change title to host name to demo NLB
 if app.config['SHOWHOST'] == "true":
